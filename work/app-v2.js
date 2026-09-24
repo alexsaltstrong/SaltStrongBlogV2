@@ -324,6 +324,24 @@ function renderSelection() {
   document.getElementById('subtotal').textContent =
     money(sum);
 
+
+  // Keep the final Fish Strong link synced to the current selection.
+  const cartUrl = buildFishStrongCartUrl();
+
+  document
+    .querySelectorAll('[data-cart]')
+    .forEach(link => {
+
+      if (cartUrl) {
+        link.href = cartUrl;
+        link.removeAttribute('aria-disabled');
+      } else {
+        link.href = 'https://fishstrong.com/';
+        link.setAttribute('aria-disabled', 'true');
+      }
+
+    });
+
 }
 
 
@@ -519,31 +537,18 @@ document.addEventListener('click', event => {
 
 
   // ------------------------------------------------------
-  // CONTINUE AT FISH STRONG
+  // OPEN SELECTED GEAR IN FISH STRONG
   // ------------------------------------------------------
 
-  // Works with:
-  //
-  // <button data-cart>
-  //
-  // OR automatically detects your existing button based
-  // on the text "Continue at Fish Strong".
-
- if (
-  button.hasAttribute('data-cart') ||
-  /(?:continue\s+at|open)\s+fish\s+strong/i.test(
-    button.textContent || ''
-  )
-) {
-
-    event.preventDefault();
-
+  if (button.hasAttribute('data-cart')) {
 
     const cartUrl =
       buildFishStrongCartUrl();
 
 
     if (!cartUrl) {
+
+      event.preventDefault();
 
       notify(
         'Select at least one lure first.'
@@ -554,7 +559,9 @@ document.addEventListener('click', event => {
     }
 
 
-    window.location.assign(cartUrl);
+    // The link normally already has this URL from renderSelection(),
+    // but setting it again here guarantees the latest selection is used.
+    button.href = cartUrl;
 
     return;
 
@@ -725,29 +732,32 @@ document.addEventListener('click', event => {
 // YOUTUBE VIDEO
 // ========================================================
 
-document
-  .getElementById('play-video')
-  .addEventListener('click', event => {
+const playVideoButton =
+  document.getElementById('play-video');
 
-    document
-      .getElementById('video-player')
-      .innerHTML = `
-        <iframe
-          title="4 Fall Fishing Lures with Luke Simonds"
-          src="https://www.youtube-nocookie.com/embed/wZSsIxLSnFA?autoplay=1&rel=0"
-          allow="autoplay; encrypted-media; picture-in-picture"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
-        ></iframe>
-      `;
+if (playVideoButton) {
 
+  playVideoButton.addEventListener('click', event => {
 
-    openDialog(
-      'video-dialog',
-      event.currentTarget
-    );
+    const video =
+      event.currentTarget.closest('.video');
+
+    if (!video) {
+      return;
+    }
+
+    video.innerHTML = `
+      <iframe
+        title="4 Fall Fishing Lures with Luke Simonds"
+        src="https://www.youtube.com/embed/wZSsIxLSnFA?autoplay=1&rel=0"
+        allow="autoplay; encrypted-media; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    `;
 
   });
+
+}
 
 
 // Initial render
