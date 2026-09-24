@@ -1,0 +1,25 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const html=fs.readFileSync('outputs/salt-strong-blog-prototype.html','utf8');
+const src=html.match(/<script>([\s\S]*?)<\/script>/)[1];
+const els=new Map(); const listeners={};
+const el=(id)=>{if(!els.has(id))els.set(id,{textContent:'',innerHTML:'',classList:{toggle(){},add(){},remove(){}},setAttribute(){},append(){},addEventListener(){},content:{cloneNode(){return {}}},focus(){}});return els.get(id)};
+const document={getElementById:el,querySelector:s=>el(s),querySelectorAll:s=>[],addEventListener:(name,fn)=>listeners[name]=fn,body:{style:{}}};
+const ctx=vm.createContext({document,Intl,Map,window:{open(){}},setTimeout:()=>1,clearTimeout(){}});
+vm.runInContext(src,ctx);
+vm.runInContext(`
+if (document.getElementById('subtotal').textContent !== '$0.00') throw Error('empty subtotal');
+add('moonwalker');
+if (document.getElementById('subtotal').textContent !== '$9.97') throw Error('single add');
+products.forEach(p=>add(p.id));
+if (document.getElementById('subtotal').textContent !== '$48.11') throw Error('Add All after single add');
+if (cart.get('moonwalker') !== 2) throw Error('quantity merge');
+cart.set('moonwalker',1); renderCart();
+if (document.getElementById('subtotal').textContent !== '$38.14') throw Error('quantity decrement');
+cart.delete('prawn');renderCart();
+if (document.getElementById('subtotal').textContent !== '$30.15') throw Error('remove');
+cart.clear();renderCart();
+if (!document.getElementById('cart-items').innerHTML.includes('empty')) throw Error('empty state');
+setMode('deep');if (mode !== 'deep') throw Error('deep mode');
+setMode('shallow');if (mode !== 'shallow') throw Error('shallow mode');
+`,ctx);
+console.log('PASS: JavaScript syntax, empty cart, individual add, Add All, quantity merging, subtotal recalculation, remove, empty state, rig mode changes.');
